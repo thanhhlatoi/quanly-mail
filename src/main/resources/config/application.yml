@@ -93,6 +93,14 @@ management:
 spring:
   application:
     name: quanlyEmail
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:mysql://localhost:3306/quanlyemail?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+    username: root
+    password:
+    hikari:
+      pool-name: Hikari
+      auto-commit: false
   docker:
     compose:
       enabled: true
