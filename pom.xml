@@ -177,6 +177,7 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
@@ -195,6 +196,10 @@
             <artifactId>mysql-connector-j</artifactId>
         </dependency>
         <dependency>
+          <groupId>org.projectlombok</groupId>
+          <artifactId>lombok</artifactId>
+        </dependency>
+      <dependency>
             <groupId>com.tngtech.archunit</groupId>
             <artifactId>archunit-junit5-api</artifactId>
             <version>${archunit-junit5.version}</version>
@@ -412,6 +417,10 @@
                         <target>${java.version}</target>
                         <parameters>true</parameters>
                         <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                            </path>
                             <path>
                                 <groupId>org.springframework.boot</groupId>
                                 <artifactId>spring-boot-configuration-processor</artifactId>
@@ -805,7 +814,7 @@
             <properties>
                 <!-- default Spring profiles -->
                 <liquibase-plugin.password/>
-                <liquibase-plugin.url>jdbc:mysql://localhost:3306/quanlyEmail</liquibase-plugin.url>
+                <liquibase-plugin.url>jdbc:mysql://localhost:3306/quanlyemail</liquibase-plugin.url>
                 <liquibase-plugin.username>root</liquibase-plugin.username>
                 <profile.test>test,testdev</profile.test>
                 <spring.profiles.active>dev${profile.tls}${profile.no-liquibase}</spring.profiles.active>
@@ -905,7 +914,7 @@
             <properties>
                 <!-- default Spring profiles -->
                 <liquibase-plugin.password/>
-                <liquibase-plugin.url>jdbc:mysql://localhost:3306/quanlyEmail</liquibase-plugin.url>
+                <liquibase-plugin.url>jdbc:mysql://localhost:3306/quanlyemail</liquibase-plugin.url>
                 <liquibase-plugin.username>root</liquibase-plugin.username>
                 <profile.test>test,testprod</profile.test>
                 <spring.profiles.active>prod${profile.api-docs}${profile.tls}${profile.e2e}${profile.no-liquibase}</spring.profiles.active>

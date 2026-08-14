@@ -4,7 +4,6 @@ import com.mycompany.myapp.config.SecurityConfiguration;
 import com.mycompany.myapp.config.SecurityJwtConfiguration;
 import com.mycompany.myapp.config.WebConfigurer;
 import com.mycompany.myapp.management.SecurityMetersService;
-import com.mycompany.myapp.web.rest.AuthenticateController;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
