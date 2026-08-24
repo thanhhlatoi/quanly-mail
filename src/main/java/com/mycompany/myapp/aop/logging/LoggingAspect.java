@@ -1,5 +1,6 @@
 package com.mycompany.myapp.aop.logging;
 
+import com.mycompany.myapp.dto.request.GoogleLoginRequest;
 import java.util.Arrays;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -101,7 +102,7 @@ public class LoggingAspect {
     public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
         var log = logger(joinPoint);
         if (log.isDebugEnabled()) {
-            log.debug("Enter: {}() with argument[s] = {}", joinPoint.getSignature().getName(), Arrays.toString(joinPoint.getArgs()));
+            log.debug("Enter: {}() with argument[s] = {}", joinPoint.getSignature().getName(), safeArguments(joinPoint.getArgs()));
         }
         try {
             Object result = joinPoint.proceed();
@@ -110,8 +111,15 @@ public class LoggingAspect {
             }
             return result;
         } catch (IllegalArgumentException e) {
-            log.error("Illegal argument: {} in {}()", Arrays.toString(joinPoint.getArgs()), joinPoint.getSignature().getName());
+            log.error("Illegal argument in {}()", joinPoint.getSignature().getName(), e);
             throw e;
         }
+    }
+
+    private String safeArguments(Object[] arguments) {
+        return Arrays.stream(arguments)
+            .map(argument -> argument instanceof GoogleLoginRequest ? "GoogleLoginRequest[idToken=REDACTED]" : String.valueOf(argument))
+            .toList()
+            .toString();
     }
 }

@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="00000000000003" author="quanly-email">
+        <createTable tableName="users">
+            <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="user_name" type="varchar(100)"/>
+            <column name="pass_word" type="varchar(255)"/>
+            <column name="full_name" type="varchar(255)"/>
+            <column name="date_of_birth" type="date"/>
+            <column name="email" type="varchar(255)"/>
+            <column name="phone_number" type="varchar(30)"/>
+            <column name="status" type="boolean" defaultValueBoolean="true"><constraints nullable="false"/></column>
+        </createTable>
+        <createTable tableName="role">
+            <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="name" type="varchar(100)"><constraints nullable="false"/></column>
+            <column name="description" type="varchar(255)"/>
+        </createTable>
+        <createTable tableName="permissions">
+            <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="name" type="varchar(100)"><constraints nullable="false"/></column>
+            <column name="description" type="varchar(255)"/>
+        </createTable>
+        <createTable tableName="user_roles">
+            <column name="user_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="role_id" type="bigint"><constraints nullable="false"/></column>
+        </createTable>
+        <addPrimaryKey tableName="user_roles" columnNames="user_id, role_id" constraintName="pk_user_roles"/>
+        <addForeignKeyConstraint baseTableName="user_roles" baseColumnNames="user_id" referencedTableName="users" referencedColumnNames="id" constraintName="fk_user_roles_user"/>
+        <addForeignKeyConstraint baseTableName="user_roles" baseColumnNames="role_id" referencedTableName="role" referencedColumnNames="id" constraintName="fk_user_roles_role"/>
+        <createTable tableName="role_permissions">
+            <column name="role_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="permissions_id" type="bigint"><constraints nullable="false"/></column>
+        </createTable>
+        <addPrimaryKey tableName="role_permissions" columnNames="role_id, permissions_id" constraintName="pk_role_permissions"/>
+        <addForeignKeyConstraint baseTableName="role_permissions" baseColumnNames="role_id" referencedTableName="role" referencedColumnNames="id" constraintName="fk_role_permissions_role"/>
+        <addForeignKeyConstraint baseTableName="role_permissions" baseColumnNames="permissions_id" referencedTableName="permissions" referencedColumnNames="id" constraintName="fk_role_permissions_permission"/>
+        <createTable tableName="email_account">
+            <column name="id" type="varchar(36)"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="email_address" type="varchar(255)"><constraints nullable="false"/></column>
+            <column name="password_encrypted" type="clob"><constraints nullable="false"/></column>
+            <column name="two_factor_secret_encrypted" type="clob"/>
+            <column name="recovery_phone" type="varchar(30)"/>
+            <column name="recovery_email" type="varchar(255)"/>
+            <column name="country_code" type="varchar(2)"/>
+            <column name="status" type="varchar(30)"><constraints nullable="false"/></column>
+            <column name="assigned_user_id" type="bigint"/>
+            <column name="purchase_price" type="decimal(19,2)"/>
+            <column name="note" type="clob"/>
+            <column name="created_at" type="timestamp"><constraints nullable="false"/></column>
+            <column name="updated_at" type="timestamp"><constraints nullable="false"/></column>
+            <column name="last_checked_at" type="timestamp"/>
+            <column name="last_login_at" type="timestamp"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="email_account" baseColumnNames="assigned_user_id" referencedTableName="users" referencedColumnNames="id" constraintName="fk_email_account_user"/>
+        <createTable tableName="email_account_assignments">
+            <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="email_account_id" type="varchar(36)"><constraints nullable="false"/></column>
+            <column name="user_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="assigned_by" type="bigint"><constraints nullable="false"/></column>
+            <column name="service_type" type="varchar(30)"><constraints nullable="false"/></column>
+            <column name="assignedAt" type="timestamp"/>
+            <column name="unassignedAt" type="timestamp"/>
+            <column name="note" type="clob"/>
+            <column name="status" type="varchar(30)"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="email_account_assignments" baseColumnNames="email_account_id" referencedTableName="email_account" referencedColumnNames="id" constraintName="fk_assignment_email_account"/>
+        <addForeignKeyConstraint baseTableName="email_account_assignments" baseColumnNames="user_id" referencedTableName="users" referencedColumnNames="id" constraintName="fk_assignment_user"/>
+        <addForeignKeyConstraint baseTableName="email_account_assignments" baseColumnNames="assigned_by" referencedTableName="users" referencedColumnNames="id" constraintName="fk_assignment_admin"/>
+    </changeSet>
+
+    <changeSet id="00000000000004" author="quanly-email">
+        <createTable tableName="youtube_channels">
+            <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="channel_url" type="varchar(500)"><constraints nullable="false" unique="true"/></column>
+            <column name="channel_name" type="varchar(255)"/>
+            <column name="assignment_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="user_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="status" type="varchar(20)"><constraints nullable="false"/></column>
+            <column name="note" type="clob"/>
+            <column name="created_at" type="timestamp"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="youtube_channels" baseColumnNames="assignment_id" referencedTableName="email_account_assignments" referencedColumnNames="id" constraintName="fk_youtube_channel_assignment"/>
+        <addForeignKeyConstraint baseTableName="youtube_channels" baseColumnNames="user_id" referencedTableName="users" referencedColumnNames="id" constraintName="fk_youtube_channel_user"/>
+        <createIndex tableName="youtube_channels" indexName="idx_youtube_channel_user">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createTable tableName="youtube_channel_checks">
+            <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="channel_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="checked_by" type="bigint"><constraints nullable="false"/></column>
+            <column name="check_date" type="date"><constraints nullable="false"/></column>
+            <column name="status" type="varchar(20)"><constraints nullable="false"/></column>
+            <column name="video_count" type="int"/>
+            <column name="note" type="clob"/>
+            <column name="checked_at" type="timestamp"><constraints nullable="false"/></column>
+        </createTable>
+        <addUniqueConstraint tableName="youtube_channel_checks" columnNames="channel_id, check_date" constraintName="uk_youtube_channel_check_day_columns"/>
+        <addForeignKeyConstraint baseTableName="youtube_channel_checks" baseColumnNames="channel_id" referencedTableName="youtube_channels" referencedColumnNames="id" constraintName="fk_youtube_check_channel"/>
+        <addForeignKeyConstraint baseTableName="youtube_channel_checks" baseColumnNames="checked_by" referencedTableName="users" referencedColumnNames="id" constraintName="fk_youtube_check_admin"/>
+        <createIndex tableName="youtube_channel_checks" indexName="idx_youtube_check_date">
+            <column name="check_date"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="00000000000005" author="quanly-email">
+        <createTable tableName="services">
+            <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="email_account_id" type="varchar(36)"><constraints nullable="false"/></column>
+            <column name="service_type" type="varchar(30)"><constraints nullable="false"/></column>
+            <column name="note" type="clob"/>
+            <column name="active" type="boolean" defaultValueBoolean="true"><constraints nullable="false"/></column>
+            <column name="created_at" type="timestamp"><constraints nullable="false"/></column>
+        </createTable>
+        <addUniqueConstraint tableName="services" columnNames="email_account_id, service_type" constraintName="uk_services_email_service"/>
+        <addForeignKeyConstraint baseTableName="services" baseColumnNames="email_account_id" referencedTableName="email_account" referencedColumnNames="id" constraintName="fk_services_email_account"/>
+        <createIndex tableName="services" indexName="idx_services_service_type">
+            <column name="service_type"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="00000000000006" author="quanly-email">
+        <createTable tableName="work_logs">
+            <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="assignment_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="user_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="channel_id" type="bigint"/>
+            <column name="work_date" type="date"><constraints nullable="false"/></column>
+            <column name="content" type="clob"><constraints nullable="false"/></column>
+            <column name="status" type="varchar(20)"><constraints nullable="false"/></column>
+            <column name="review_note" type="clob"/>
+            <column name="reviewed_by" type="bigint"/>
+            <column name="created_at" type="timestamp"><constraints nullable="false"/></column>
+            <column name="reviewed_at" type="timestamp"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="work_logs" baseColumnNames="assignment_id" referencedTableName="email_account_assignments" referencedColumnNames="id" constraintName="fk_work_log_assignment"/>
+        <addForeignKeyConstraint baseTableName="work_logs" baseColumnNames="user_id" referencedTableName="users" referencedColumnNames="id" constraintName="fk_work_log_user"/>
+        <addForeignKeyConstraint baseTableName="work_logs" baseColumnNames="channel_id" referencedTableName="youtube_channels" referencedColumnNames="id" constraintName="fk_work_log_channel"/>
+        <addForeignKeyConstraint baseTableName="work_logs" baseColumnNames="reviewed_by" referencedTableName="users" referencedColumnNames="id" constraintName="fk_work_log_reviewer"/>
+        <createIndex tableName="work_logs" indexName="idx_work_logs_user">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex tableName="work_logs" indexName="idx_work_logs_status">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="00000000000007" author="quanly-email">
+        <createTable tableName="adsense_channel_links">
+            <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="adsense_service_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="channel_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="active" type="boolean" defaultValueBoolean="true"><constraints nullable="false"/></column>
+            <column name="note" type="clob"/>
+            <column name="created_at" type="timestamp"><constraints nullable="false"/></column>
+        </createTable>
+        <addUniqueConstraint tableName="adsense_channel_links" columnNames="adsense_service_id, channel_id" constraintName="uk_adsense_channel_link"/>
+        <addForeignKeyConstraint baseTableName="adsense_channel_links" baseColumnNames="adsense_service_id" referencedTableName="services" referencedColumnNames="id" constraintName="fk_adsense_link_service"/>
+        <addForeignKeyConstraint baseTableName="adsense_channel_links" baseColumnNames="channel_id" referencedTableName="youtube_channels" referencedColumnNames="id" constraintName="fk_adsense_link_channel"/>
+        <createIndex tableName="adsense_channel_links" indexName="idx_adsense_links_channel">
+            <column name="channel_id"/>
+        </createIndex>
+
+        <createTable tableName="adsense_revenues">
+            <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="link_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="revenue_date" type="date"><constraints nullable="false"/></column>
+            <column name="amount" type="decimal(19,2)"><constraints nullable="false"/></column>
+            <column name="currency" type="varchar(3)"><constraints nullable="false"/></column>
+            <column name="note" type="clob"/>
+            <column name="updated_by" type="bigint"><constraints nullable="false"/></column>
+            <column name="updated_at" type="timestamp"><constraints nullable="false"/></column>
+        </createTable>
+        <addUniqueConstraint tableName="adsense_revenues" columnNames="link_id, revenue_date" constraintName="uk_adsense_revenue_day"/>
+        <addForeignKeyConstraint baseTableName="adsense_revenues" baseColumnNames="link_id" referencedTableName="adsense_channel_links" referencedColumnNames="id" constraintName="fk_adsense_revenue_link"/>
+        <addForeignKeyConstraint baseTableName="adsense_revenues" baseColumnNames="updated_by" referencedTableName="users" referencedColumnNames="id" constraintName="fk_adsense_revenue_admin"/>
+        <createIndex tableName="adsense_revenues" indexName="idx_adsense_revenues_date">
+            <column name="revenue_date"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="00000000000008" author="quanly-email">
+        <createTable tableName="youtube_monetization_applications">
+            <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="channel_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="assignment_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="user_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="status" type="varchar(30)"><constraints nullable="false"/></column>
+            <column name="submitted_date" type="date"><constraints nullable="false"/></column>
+            <column name="eligibility_note" type="clob"/>
+            <column name="submitted_info" type="clob"/>
+            <column name="admin_note" type="clob"/>
+            <column name="error_message" type="clob"/>
+            <column name="reviewed_by" type="bigint"/>
+            <column name="created_at" type="timestamp"><constraints nullable="false"/></column>
+            <column name="updated_at" type="timestamp"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="youtube_monetization_applications" baseColumnNames="channel_id" referencedTableName="youtube_channels" referencedColumnNames="id" constraintName="fk_monetization_channel"/>
+        <addForeignKeyConstraint baseTableName="youtube_monetization_applications" baseColumnNames="assignment_id" referencedTableName="email_account_assignments" referencedColumnNames="id" constraintName="fk_monetization_assignment"/>
+        <addForeignKeyConstraint baseTableName="youtube_monetization_applications" baseColumnNames="user_id" referencedTableName="users" referencedColumnNames="id" constraintName="fk_monetization_user"/>
+        <addForeignKeyConstraint baseTableName="youtube_monetization_applications" baseColumnNames="reviewed_by" referencedTableName="users" referencedColumnNames="id" constraintName="fk_monetization_reviewer"/>
+        <createIndex tableName="youtube_monetization_applications" indexName="idx_monetization_status">
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="youtube_monetization_applications" indexName="idx_monetization_user">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="00000000000009" author="quanly-email">
+        <createTable tableName="adsense_monthly_revenues">
+            <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="link_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="revenue_month" type="varchar(7)"><constraints nullable="false"/></column>
+            <column name="amount" type="decimal(19,2)"><constraints nullable="false"/></column>
+            <column name="currency" type="varchar(3)"><constraints nullable="false"/></column>
+            <column name="note" type="clob"/>
+            <column name="updated_by" type="bigint"><constraints nullable="false"/></column>
+            <column name="updated_at" type="timestamp"><constraints nullable="false"/></column>
+        </createTable>
+        <addUniqueConstraint tableName="adsense_monthly_revenues" columnNames="link_id, revenue_month" constraintName="uk_adsense_monthly_revenue"/>
+        <addForeignKeyConstraint baseTableName="adsense_monthly_revenues" baseColumnNames="link_id" referencedTableName="adsense_channel_links" referencedColumnNames="id" constraintName="fk_adsense_monthly_link"/>
+        <addForeignKeyConstraint baseTableName="adsense_monthly_revenues" baseColumnNames="updated_by" referencedTableName="users" referencedColumnNames="id" constraintName="fk_adsense_monthly_user"/>
+        <createIndex tableName="adsense_monthly_revenues" indexName="idx_adsense_monthly_month">
+            <column name="revenue_month"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="00000000000010" author="quanly-email">
+        <sql dbms="mysql" splitStatements="true" stripComments="true">
+            INSERT INTO users (user_name, pass_word, full_name, email, status)
+            SELECT 'tienthanh11042003@gmail.com', 'GOOGLE_LOGIN_ONLY', 'Thanh Tien', 'tienthanh11042003@gmail.com', TRUE
+            WHERE NOT EXISTS (
+                SELECT 1 FROM users WHERE LOWER(email) = LOWER('tienthanh11042003@gmail.com')
+            );
+
+            INSERT INTO role (name, description)
+            SELECT 'ADMIN', 'Quản trị viên hệ thống'
+            WHERE NOT EXISTS (
+                SELECT 1 FROM role WHERE name = 'ADMIN'
+            );
+
+            INSERT INTO user_roles (user_id, role_id)
+            SELECT u.id, r.id
+            FROM users u
+            CROSS JOIN role r
+            WHERE LOWER(u.email) = LOWER('tienthanh11042003@gmail.com')
+              AND r.name = 'ADMIN'
+              AND NOT EXISTS (
+                  SELECT 1 FROM user_roles ur
+                  WHERE ur.user_id = u.id AND ur.role_id = r.id
+              );
+        </sql>
+    </changeSet>
+
+    <changeSet id="00000000000011" author="quanly-email">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <or>
+                <tableExists tableName="jhi_user_authority"/>
+                <tableExists tableName="jhi_authority"/>
+                <tableExists tableName="jhi_user"/>
+                <tableExists tableName="jhi_date_time_wrapper"/>
+            </or>
+        </preConditions>
+        <dropTable tableName="jhi_user_authority" cascadeConstraints="true"/>
+        <dropTable tableName="jhi_authority" cascadeConstraints="true"/>
+        <dropTable tableName="jhi_user" cascadeConstraints="true"/>
+        <dropTable tableName="jhi_date_time_wrapper" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="00000000000012" author="quanly-email">
+        <preConditions onFail="HALT" onError="HALT">
+            <not>
+                <uniqueConstraintExists tableName="adsense_channel_links" constraintName="uk_adsense_channel_link_channel"/>
+            </not>
+        </preConditions>
+        <dropUniqueConstraint tableName="adsense_channel_links" constraintName="uk_adsense_channel_link"/>
+        <addUniqueConstraint tableName="adsense_channel_links" columnNames="channel_id" constraintName="uk_adsense_channel_link_channel"/>
+    </changeSet>
+
+    <changeSet id="00000000000013" author="quanly-email">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <not>
+                <columnExists tableName="email_account" columnName="active"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="email_account">
+            <column name="active" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="00000000000016" author="quanly-email">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <columnExists tableName="email_account" columnName="two_factor_enabled"/>
+        </preConditions>
+        <dropColumn tableName="email_account" columnName="two_factor_enabled"/>
+    </changeSet>
+
+    <changeSet id="00000000000017" author="quanly-email">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <not>
+                <columnExists tableName="email_account" columnName="account_year"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="email_account">
+            <column name="account_year" type="int"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="00000000000018" author="quanly-email">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <columnExists tableName="email_account" columnName="account"/>
+        </preConditions>
+        <dropColumn tableName="email_account" columnName="account"/>
+    </changeSet>
+
+    <changeSet id="00000000000019" author="quanly-email">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <columnExists tableName="email_account" columnName="number"/>
+        </preConditions>
+        <dropColumn tableName="email_account" columnName="number"/>
+    </changeSet>
+
+    <changeSet id="00000000000020" author="quanly-email">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <columnExists tableName="email_account" columnName="passwork"/>
+        </preConditions>
+        <dropColumn tableName="email_account" columnName="passwork"/>
+    </changeSet>
+
+    <changeSet id="00000000000021" author="quanly-email">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <columnExists tableName="email_account" columnName="two_factor_auth"/>
+        </preConditions>
+        <dropColumn tableName="email_account" columnName="two_factor_auth"/>
+    </changeSet>
+
+    <changeSet id="00000000000022" author="quanly-email">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <not>
+                <columnExists tableName="email_account_assignments" columnName="usage_status"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="email_account_assignments">
+            <column name="usage_status" type="varchar(30)" defaultValue="ASSIGNED">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="00000000000023" author="quanly-email">
+        <createTable tableName="notifications">
+            <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="recipient_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="sender_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="title" type="varchar(180)"><constraints nullable="false"/></column>
+            <column name="content" type="clob"><constraints nullable="false"/></column>
+            <column name="is_read" type="boolean" defaultValueBoolean="false"><constraints nullable="false"/></column>
+            <column name="created_at" type="timestamp"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="notifications" baseColumnNames="recipient_id" referencedTableName="users" referencedColumnNames="id" constraintName="fk_notifications_recipient"/>
+        <addForeignKeyConstraint baseTableName="notifications" baseColumnNames="sender_id" referencedTableName="users" referencedColumnNames="id" constraintName="fk_notifications_sender"/>
+    </changeSet>
+</databaseChangeLog>
