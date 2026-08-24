@@ -1,0 +1,31 @@
+package com.mycompany.myapp.dto.response;
+
+import com.mycompany.myapp.domain.EmailAccountStatus;
+import com.mycompany.myapp.domain.User;
+import java.math.BigDecimal;
+import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class EmailAccountResponse {
+
+    private String id;
+    private String emailAddress;
+    private String passwordEncrypted;
+    private String twoFactorSecretEncrypted;
+    private String recoveryPhone;
+    private String recoveryEmail;
+    private String countryCode;
+    private Integer year;
+    private EmailAccountStatus status;
+    private User assignedUser;
+    private BigDecimal purchasePrice;
+    private String note;
+    private Instant updatedAt;
+    private Instant lastCheckedAt;
+    private Instant lastLoginAt;
+}

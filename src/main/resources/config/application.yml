@@ -91,6 +91,8 @@ management:
       application: ${spring.application.name}
 
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: quanlyEmail
   datasource:
@@ -225,3 +227,8 @@ jhipster:
 # ===================================================================
 
 # application:
+application:
+  security:
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:}
+      client-secret: ${GOOGLE_CLIENT_SECRET:}

@@ -32,18 +32,19 @@ public class SecurityJwtConfiguration {
             try {
                 return jwtDecoder.decode(token);
             } catch (Exception e) {
-                if (e.getMessage().contains("Invalid signature")) {
+                String message = e.getMessage() == null ? "" : e.getMessage();
+                if (message.contains("Invalid signature")) {
                     metersService.trackTokenInvalidSignature();
-                } else if (e.getMessage().contains("Jwt expired at")) {
+                } else if (message.contains("Jwt expired at")) {
                     metersService.trackTokenExpired();
                 } else if (
-                    e.getMessage().contains("Invalid JWT serialization") ||
-                    e.getMessage().contains("Malformed token") ||
-                    e.getMessage().contains("Invalid unsecured/JWS/JWE")
+                    message.contains("Invalid JWT serialization") ||
+                    message.contains("Malformed token") ||
+                    message.contains("Invalid unsecured/JWS/JWE")
                 ) {
                     metersService.trackTokenMalformed();
                 } else {
-                    LOG.error("Unknown JWT error {}", e.getMessage());
+                    LOG.error("Unknown JWT error", e);
                 }
                 throw e;
             }
