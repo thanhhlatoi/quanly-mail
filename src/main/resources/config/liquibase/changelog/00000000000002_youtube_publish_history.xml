@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="00000000000008" author="quanly-email">
+        <createTable tableName="youtube_publish_history">
+            <column name="id" type="bigint" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="user_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="channel_key" type="varchar(255)"><constraints nullable="false"/></column>
+            <column name="channel_name" type="varchar(255)"/>
+            <column name="video_key" type="varchar(512)"><constraints nullable="false"/></column>
+            <column name="video_hash" type="varchar(64)"><constraints nullable="false"/></column>
+            <column name="video_index" type="int"><constraints nullable="false"/></column>
+            <column name="video_title" type="varchar(500)"><constraints nullable="false"/></column>
+            <column name="visibility" type="varchar(20)"><constraints nullable="false"/></column>
+            <column name="machine_name" type="varchar(255)"><constraints nullable="false"/></column>
+            <column name="published_at" type="timestamp"><constraints nullable="false"/></column>
+            <column name="created_at" type="timestamp"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="youtube_publish_history" baseColumnNames="user_id"
+            referencedTableName="users" referencedColumnNames="id" constraintName="fk_youtube_publish_history_user"/>
+        <addUniqueConstraint tableName="youtube_publish_history" columnNames="user_id, channel_key, video_hash"
+            constraintName="uk_youtube_publish_history_video"/>
+        <createIndex tableName="youtube_publish_history" indexName="idx_youtube_publish_history_channel">
+            <column name="user_id"/>
+            <column name="channel_key"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
