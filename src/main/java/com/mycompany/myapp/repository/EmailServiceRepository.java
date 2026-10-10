@@ -16,4 +16,10 @@ public interface EmailServiceRepository extends JpaRepository<EmailService, Long
     boolean existsByEmailAccountIdAndServiceType(String emailAccountId, EmailAccountServiceType serviceType);
 
     boolean existsByEmailAccountIdAndServiceTypeAndActiveTrue(String emailAccountId, EmailAccountServiceType serviceType);
+
+    @EntityGraph(attributePaths = "emailAccount")
+    java.util.Optional<EmailService> findByEmailAccountIdAndServiceTypeAndActiveTrue(
+        String emailAccountId,
+        EmailAccountServiceType serviceType
+    );
 }

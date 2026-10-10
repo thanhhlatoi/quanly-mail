@@ -38,4 +38,7 @@ public class AdSenseChannelLink {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    @Column(name = "unlinked_at")
+    private Instant unlinkedAt;
 }

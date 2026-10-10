@@ -19,6 +19,14 @@ public interface EmailAccountAssignmentRepository extends JpaRepository<EmailAcc
     Optional<EmailAccountAssignment> findDetailedById(@Param("id") Long id);
 
     @Query(
+        "select a from EmailAccountAssignment a join fetch a.emailAccount where a.id = :id and a.serviceType = :serviceType and a.status = com.mycompany.myapp.domain.AssignmentStatus.ACTIVE"
+    )
+    Optional<EmailAccountAssignment> findActiveDetailedByIdAndServiceType(
+        @Param("id") Long id,
+        @Param("serviceType") EmailAccountServiceType serviceType
+    );
+
+    @Query(
         value = "select a from EmailAccountAssignment a join fetch a.emailAccount where a.user.id = :userId and a.status = com.mycompany.myapp.domain.AssignmentStatus.ACTIVE and a.serviceType <> com.mycompany.myapp.domain.EmailAccountServiceType.GOOGLE_ADSENSE",
         countQuery = "select count(a) from EmailAccountAssignment a where a.user.id = :userId and a.status = com.mycompany.myapp.domain.AssignmentStatus.ACTIVE and a.serviceType <> com.mycompany.myapp.domain.EmailAccountServiceType.GOOGLE_ADSENSE"
     )

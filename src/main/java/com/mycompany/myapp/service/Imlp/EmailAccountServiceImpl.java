@@ -4,6 +4,7 @@ import com.mycompany.myapp.domain.AdSenseChannelLink;
 import com.mycompany.myapp.domain.EmailAccount;
 import com.mycompany.myapp.domain.EmailAccountAssignment;
 import com.mycompany.myapp.domain.EmailAccountStatus;
+import com.mycompany.myapp.domain.EmailAccountServiceType;
 import com.mycompany.myapp.domain.User;
 import com.mycompany.myapp.dto.request.EmailAccountRequest;
 import com.mycompany.myapp.dto.response.EmailAccountImportResponse;
@@ -54,6 +55,7 @@ public class EmailAccountServiceImpl implements EmailAccountService {
     private final AdSenseChannelLinkRepository linkRepository;
     private final AdSenseRevenueRepository revenueRepository;
     private final AdSenseMonthlyRevenueRepository monthlyRevenueRepository;
+    private final com.mycompany.myapp.repository.EmailServiceRepository emailServiceRepository;
 
     public EmailAccountServiceImpl(
         EmailAccountRepository emailAccountRepository,
@@ -63,6 +65,7 @@ public class EmailAccountServiceImpl implements EmailAccountService {
         AdSenseChannelLinkRepository linkRepository,
         AdSenseRevenueRepository revenueRepository,
         AdSenseMonthlyRevenueRepository monthlyRevenueRepository
+        , com.mycompany.myapp.repository.EmailServiceRepository emailServiceRepository
     ) {
         this.emailAccountRepository = emailAccountRepository;
         this.userRepository = userRepository;
@@ -71,6 +74,7 @@ public class EmailAccountServiceImpl implements EmailAccountService {
         this.linkRepository = linkRepository;
         this.revenueRepository = revenueRepository;
         this.monthlyRevenueRepository = monthlyRevenueRepository;
+        this.emailServiceRepository = emailServiceRepository;
     }
 
     @Override
@@ -267,6 +271,7 @@ public class EmailAccountServiceImpl implements EmailAccountService {
         EmailAccount emailAccount = emailAccountRepository
             .findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy tài khoản email"));
+        ensureNotAdsenseAccount(id);
         if (request != null && request.getEmailAddress() != null) {
             emailAccountRepository
                 .findByEmailAddressIgnoreCase(request.getEmailAddress())
@@ -316,8 +321,10 @@ public class EmailAccountServiceImpl implements EmailAccountService {
     }
 
     @Override
-    public PageResponse<EmailAccountResponse> findPage(EmailAccountStatus status, Pageable pageable) {
-        var page = status == null ? emailAccountRepository.findAll(pageable) : emailAccountRepository.findByStatus(status, pageable);
+    public PageResponse<EmailAccountResponse> findPage(EmailAccountStatus status, Pageable pageable, boolean includeAdsense) {
+        var page = includeAdsense
+            ? status == null ? emailAccountRepository.findAll(pageable) : emailAccountRepository.findByStatus(status, pageable)
+            : status == null ? emailAccountRepository.findAllVisibleInWarehouse(pageable) : emailAccountRepository.findVisibleInWarehouseByStatus(status, pageable);
         return PageResponse.from(page.map(this::response));
     }
 
@@ -326,6 +333,7 @@ public class EmailAccountServiceImpl implements EmailAccountService {
         EmailAccount emailAccount = emailAccountRepository
             .findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy tài khoản email"));
+        ensureNotAdsenseAccount(id);
         emailAccount.setStatus(status);
         emailAccountRepository.save(emailAccount);
     }
@@ -335,6 +343,9 @@ public class EmailAccountServiceImpl implements EmailAccountService {
     public void delete(String id) {
         if (!emailAccountRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy tài khoản email");
+        }
+        if (emailServiceRepository.existsByEmailAccountIdAndServiceType(id, EmailAccountServiceType.GOOGLE_ADSENSE)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Không thể xóa Gmail AdSense trong kho Gmail; hãy quản lý tại màn AdSense");
         }
         List<AdSenseChannelLink> links = linkRepository.findByAdsenseServiceEmailAccountId(id);
         List<Long> linkIds = links.stream().map(AdSenseChannelLink::getId).toList();
@@ -403,5 +414,11 @@ public class EmailAccountServiceImpl implements EmailAccountService {
             : userRepository
                   .findById(userId)
                   .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng được gán"));
+    }
+
+    private void ensureNotAdsenseAccount(String id) {
+        if (emailServiceRepository.existsByEmailAccountIdAndServiceType(id, EmailAccountServiceType.GOOGLE_ADSENSE)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Gmail AdSense chỉ được quản lý tại màn Google AdSense");
+        }
     }
 }

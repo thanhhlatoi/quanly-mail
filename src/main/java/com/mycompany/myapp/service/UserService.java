@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface UserService {
     UserResponse create(UserRequest request);
+    UserResponse register(UserRequest request);
     UserResponse update(Long id, UserRequest request);
     Optional<UserResponse> findById(Long id);
     List<UserResponse> findAll();

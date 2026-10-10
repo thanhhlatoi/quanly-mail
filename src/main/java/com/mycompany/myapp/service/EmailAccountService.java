@@ -19,7 +19,7 @@ public interface EmailAccountService {
     List<EmailAccountResponse> findAll();
     List<EmailAccountResponse> findAvailableAccounts();
     List<EmailAccountResponse> findByStatus(EmailAccountStatus status);
-    PageResponse<EmailAccountResponse> findPage(EmailAccountStatus status, Pageable pageable);
+    PageResponse<EmailAccountResponse> findPage(EmailAccountStatus status, Pageable pageable, boolean includeAdsense);
     void changeStatus(String id, EmailAccountStatus status);
     void delete(String id);
 }

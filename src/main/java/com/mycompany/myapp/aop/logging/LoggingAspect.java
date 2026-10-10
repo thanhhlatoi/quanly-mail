@@ -107,7 +107,8 @@ public class LoggingAspect {
         try {
             Object result = joinPoint.proceed();
             if (log.isDebugEnabled()) {
-                log.debug("Exit: {}() with result = {}", joinPoint.getSignature().getName(), result);
+                // Avoid calling toString() on DTOs that may still contain Hibernate proxies.
+                log.debug("Exit: {}() with result type = {}", joinPoint.getSignature().getName(), result == null ? "null" : result.getClass().getName());
             }
             return result;
         } catch (IllegalArgumentException e) {

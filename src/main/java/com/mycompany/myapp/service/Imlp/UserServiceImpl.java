@@ -4,7 +4,9 @@ import com.mycompany.myapp.domain.User;
 import com.mycompany.myapp.dto.request.UserRequest;
 import com.mycompany.myapp.dto.response.PageResponse;
 import com.mycompany.myapp.dto.response.UserResponse;
+import com.mycompany.myapp.domain.Role;
 import com.mycompany.myapp.repository.UserRepository;
+import com.mycompany.myapp.repository.RoleRepository;
 import com.mycompany.myapp.service.UserService;
 import java.util.List;
 import java.util.Optional;
@@ -20,16 +22,42 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.roleRepository = roleRepository;
     }
 
     @Override
     public UserResponse create(UserRequest request) {
         User user = new User();
         copy(request, user);
+        return toResponse(userRepository.save(user));
+    }
+
+    @Override
+    public UserResponse register(UserRequest request) {
+        if (request == null || request.getUserName() == null || request.getUserName().isBlank() || request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username và mật khẩu không được để trống");
+        }
+        if (userRepository.existsByUserNameIgnoreCase(request.getUserName())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Tên đăng nhập đã tồn tại");
+        }
+        if (request.getEmail() != null && userRepository.existsByEmailIgnoreCase(request.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email đã tồn tại");
+        }
+        User user = new User();
+        copy(request, user);
+        user.setStatus(true);
+        Role userRole = roleRepository.findByNameIgnoreCase("USER").orElseGet(() -> {
+            Role role = new Role();
+            role.setName("USER");
+            role.setDescription("Người dùng hệ thống");
+            return roleRepository.save(role);
+        });
+        user.getRoles().add(userRole);
         return toResponse(userRepository.save(user));
     }
 

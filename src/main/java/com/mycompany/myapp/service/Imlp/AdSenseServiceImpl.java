@@ -4,6 +4,7 @@ import com.mycompany.myapp.domain.AdSenseChannelLink;
 import com.mycompany.myapp.domain.AdSenseMonthlyRevenue;
 import com.mycompany.myapp.domain.AdSenseRevenue;
 import com.mycompany.myapp.domain.EmailAccountServiceType;
+import com.mycompany.myapp.domain.EmailAccountAssignment;
 import com.mycompany.myapp.domain.EmailService;
 import com.mycompany.myapp.domain.MonetizationApplicationStatus;
 import com.mycompany.myapp.domain.User;
@@ -20,6 +21,7 @@ import com.mycompany.myapp.repository.AdSenseChannelLinkRepository;
 import com.mycompany.myapp.repository.AdSenseMonthlyRevenueRepository;
 import com.mycompany.myapp.repository.AdSenseRevenueRepository;
 import com.mycompany.myapp.repository.EmailServiceRepository;
+import com.mycompany.myapp.repository.EmailAccountAssignmentRepository;
 import com.mycompany.myapp.repository.UserRepository;
 import com.mycompany.myapp.repository.YouTubeChannelRepository;
 import com.mycompany.myapp.repository.YouTubeMonetizationApplicationRepository;
@@ -39,6 +41,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class AdSenseServiceImpl implements AdSenseService {
 
     private final EmailServiceRepository emailServiceRepository;
+    private final EmailAccountAssignmentRepository assignmentRepository;
     private final YouTubeChannelRepository channelRepository;
     private final AdSenseChannelLinkRepository linkRepository;
     private final AdSenseRevenueRepository revenueRepository;
@@ -48,6 +51,7 @@ public class AdSenseServiceImpl implements AdSenseService {
 
     public AdSenseServiceImpl(
         EmailServiceRepository emailServiceRepository,
+        EmailAccountAssignmentRepository assignmentRepository,
         YouTubeChannelRepository channelRepository,
         AdSenseChannelLinkRepository linkRepository,
         AdSenseRevenueRepository revenueRepository,
@@ -56,6 +60,7 @@ public class AdSenseServiceImpl implements AdSenseService {
         YouTubeMonetizationApplicationRepository monetizationRepository
     ) {
         this.emailServiceRepository = emailServiceRepository;
+        this.assignmentRepository = assignmentRepository;
         this.channelRepository = channelRepository;
         this.linkRepository = linkRepository;
         this.revenueRepository = revenueRepository;
@@ -67,24 +72,60 @@ public class AdSenseServiceImpl implements AdSenseService {
     @Override
     @Transactional
     public AdSenseChannelLinkResponse linkChannel(AdSenseChannelLinkRequest request) {
-        EmailService adsenseService = emailServiceRepository
-            .findById(request.getAdsenseServiceId())
-            .orElseThrow(() -> notFound("Không tìm thấy dịch vụ Gmail AdSense"));
+        EmailService adsenseService = resolveAdsenseService(request);
         if (adsenseService.getServiceType() != EmailAccountServiceType.GOOGLE_ADSENSE || !adsenseService.isActive()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Gmail chưa được khai báo là AdSense đang hoạt động");
         }
         var channel = channelRepository.findDetailedById(request.getChannelId()).orElseThrow(() -> notFound("Không tìm thấy kênh YouTube"));
 
-        AdSenseChannelLink link = linkRepository.findByChannelId(channel.getId()).orElseGet(AdSenseChannelLink::new);
-        if (link.isActive()) {
+        Optional<AdSenseChannelLink> existingLink = linkRepository.findByChannelId(channel.getId());
+        if (existingLink.isPresent() && existingLink.get().isActive()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Kênh YouTube đã được nối với Gmail AdSense");
         }
+        AdSenseChannelLink link = existingLink.orElseGet(AdSenseChannelLink::new);
         link.setAdsenseService(adsenseService);
         link.setChannel(channel);
         link.setActive(true);
         link.setNote(request.getNote());
-        link.setCreatedAt(Instant.now());
+        link.setUnlinkedAt(null);
+        if (link.getCreatedAt() == null) {
+            link.setCreatedAt(Instant.now());
+        }
         return toLinkResponse(linkRepository.save(link));
+    }
+
+    private EmailService resolveAdsenseService(AdSenseChannelLinkRequest request) {
+        if (request.getAdsenseServiceId() != null) {
+            return emailServiceRepository
+                .findById(request.getAdsenseServiceId())
+                .orElseThrow(() -> notFound("Không tìm thấy dịch vụ Gmail AdSense"));
+        }
+
+        if (request.getAssignmentId() != null) {
+            EmailAccountAssignment assignment = assignmentRepository
+                .findActiveDetailedByIdAndServiceType(request.getAssignmentId(), EmailAccountServiceType.GOOGLE_ADSENSE)
+                .orElseThrow(() -> notFound("Không tìm thấy assignment Gmail AdSense đang hoạt động"));
+            return emailServiceRepository
+                .findByEmailAccountIdAndServiceTypeAndActiveTrue(
+                    assignment.getEmailAccount().getId(),
+                    EmailAccountServiceType.GOOGLE_ADSENSE
+                )
+                .orElseThrow(() -> notFound("Gmail chưa được khai báo là dịch vụ AdSense"));
+        }
+
+        if (request.getEmailAccountId() != null && !request.getEmailAccountId().isBlank()) {
+            return emailServiceRepository
+                .findByEmailAccountIdAndServiceTypeAndActiveTrue(
+                    request.getEmailAccountId().trim(),
+                    EmailAccountServiceType.GOOGLE_ADSENSE
+                )
+                .orElseThrow(() -> notFound("Gmail chưa được khai báo là dịch vụ AdSense"));
+        }
+
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST,
+            "Cần truyền adsenseServiceId, assignmentId hoặc emailAccountId"
+        );
     }
 
     @Override
@@ -97,7 +138,11 @@ public class AdSenseServiceImpl implements AdSenseService {
     @Transactional
     public void unlinkChannel(Long linkId) {
         AdSenseChannelLink link = linkRepository.findById(linkId).orElseThrow(() -> notFound("Không tìm thấy liên kết AdSense"));
+        if (!link.isActive()) {
+            return;
+        }
         link.setActive(false);
+        link.setUnlinkedAt(Instant.now());
         linkRepository.save(link);
     }
 
@@ -195,7 +240,8 @@ public class AdSenseServiceImpl implements AdSenseService {
             link.getChannel().getUser().getEmail(),
             link.isActive(),
             link.getNote(),
-            link.getCreatedAt()
+            link.getCreatedAt(),
+            link.getUnlinkedAt()
         );
     }
 

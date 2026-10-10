@@ -22,4 +22,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @EntityGraph(attributePaths = "roles")
     Optional<User> findByUserNameIgnoreCase(String userName);
+
+    boolean existsByUserNameIgnoreCase(String userName);
+
+    boolean existsByEmailIgnoreCase(String email);
 }

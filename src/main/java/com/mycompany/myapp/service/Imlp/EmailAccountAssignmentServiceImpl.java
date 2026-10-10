@@ -12,6 +12,7 @@ import com.mycompany.myapp.dto.response.EmailAccountAssignmentResponse;
 import com.mycompany.myapp.dto.response.PageResponse;
 import com.mycompany.myapp.repository.EmailAccountAssignmentRepository;
 import com.mycompany.myapp.repository.EmailAccountRepository;
+import com.mycompany.myapp.repository.EmailServiceRepository;
 import com.mycompany.myapp.repository.UserRepository;
 import com.mycompany.myapp.service.EmailAccountAssignmentService;
 import com.mycompany.myapp.service.EmailAccountService;
@@ -31,17 +32,20 @@ public class EmailAccountAssignmentServiceImpl implements EmailAccountAssignment
     private final EmailAccountRepository emailAccountRepository;
     private final UserRepository userRepository;
     private final EmailAccountService emailAccountService;
+    private final EmailServiceRepository emailServiceRepository;
 
     public EmailAccountAssignmentServiceImpl(
         EmailAccountAssignmentRepository assignmentRepository,
         EmailAccountRepository emailAccountRepository,
         UserRepository userRepository,
-        EmailAccountService emailAccountService
+        EmailAccountService emailAccountService,
+        EmailServiceRepository emailServiceRepository
     ) {
         this.assignmentRepository = assignmentRepository;
         this.emailAccountRepository = emailAccountRepository;
         this.userRepository = userRepository;
         this.emailAccountService = emailAccountService;
+        this.emailServiceRepository = emailServiceRepository;
     }
 
     @Override
@@ -59,6 +63,9 @@ public class EmailAccountAssignmentServiceImpl implements EmailAccountAssignment
         EmailAccount emailAccount = emailAccountRepository
             .findById(request.getEmailAccountId())
             .orElseThrow(() -> notFound("Không tìm thấy Gmail"));
+        if (emailServiceRepository.existsByEmailAccountIdAndServiceType(request.getEmailAccountId(), EmailAccountServiceType.GOOGLE_ADSENSE)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Gmail AdSense không được phép giao trong kho Gmail");
+        }
         User user = userRepository.findById(request.getUserId()).orElseThrow(() -> notFound("Không tìm thấy người nhận Gmail"));
         User assignedBy = userRepository.findById(assignedById).orElseThrow(() -> notFound("Không tìm thấy người giao Gmail"));
 
