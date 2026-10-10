@@ -37,10 +37,15 @@ public class PasswordLoginServiceImpl implements PasswordLoginService {
 
     @Override
     public LoginResponse login(LoginRequest request) {
+        String userName = request.getUserName().trim();
         User user = userRepository
-            .findByUserNameIgnoreCase(request.getUserName())
+            .findByUserNameIgnoreCase(userName)
             .filter(User::isStatus)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Tên đăng nhập hoặc mật khẩu không đúng"));
+
+        if ("GOOGLE_LOGIN_ONLY".equals(user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Tài khoản này cần đăng nhập bằng Google");
+        }
 
         if (user.getPassword() == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Tên đăng nhập hoặc mật khẩu không đúng");

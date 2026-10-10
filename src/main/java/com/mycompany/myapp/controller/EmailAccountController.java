@@ -48,9 +48,10 @@ public class EmailAccountController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public PageResponse<EmailAccountResponse> findAll(
         @RequestParam(required = false) EmailAccountStatus status,
+        @RequestParam(defaultValue = "false") boolean includeAdsense,
         @PageableDefault(size = 20, sort = "createdAt") Pageable pageable
     ) {
-        return emailAccountService.findPage(status, pageable);
+        return emailAccountService.findPage(status, pageable, includeAdsense);
     }
 
     @GetMapping("/{id}")

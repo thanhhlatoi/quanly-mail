@@ -21,4 +21,5 @@ public class AdSenseChannelLinkResponse {
     private boolean active;
     private String note;
     private Instant createdAt;
+    private Instant unlinkedAt;
 }
